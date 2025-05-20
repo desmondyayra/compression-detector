@@ -34014,6 +34014,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
 /* harmony import */ var _popup_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./popup.css */ "./src/popup/popup.css");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
@@ -34036,42 +34042,109 @@ var Popup = function Popup() {
     _useState6 = _slicedToArray(_useState5, 2),
     error = _useState6[0],
     setError = _useState6[1];
+  var _useState7 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)({}),
+    _useState8 = _slicedToArray(_useState7, 2),
+    debugInfo = _useState8[0],
+    setDebugInfo = _useState8[1];
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
-    console.log("popup loaded !!!!");
-    // Get the active tab
-    chrome.tabs.query({
-      active: true,
-      currentWindow: true
-    }, function (tabs) {
-      // Check if we're on a YouTube watch page
-      var activeTab = tabs[0];
-      if (!activeTab.url.includes('youtube.com/watch')) {
+    console.log("Popup initialized");
+    var getTabAndFetchVideoInfo = function getTabAndFetchVideoInfo() {
+      try {
+        chrome.tabs.query({
+          active: true,
+          currentWindow: true
+        }, function (tabs) {
+          console.log("Chrome tabs query completed", tabs);
+          if (!tabs || tabs.length === 0) {
+            console.error("No active tabs found");
+            setLoading(false);
+            setError('No active tab found.');
+            setDebugInfo(function (prev) {
+              return _objectSpread(_objectSpread({}, prev), {}, {
+                tabsError: "No active tabs"
+              });
+            });
+            return;
+          }
+          var activeTab = tabs[0];
+          var tabId = activeTab.id;
+          var tabUrl = activeTab.url || "";
+          console.log("Active tab info:", {
+            tabId: tabId,
+            tabUrl: tabUrl
+          });
+          setDebugInfo(function (prev) {
+            return _objectSpread(_objectSpread({}, prev), {}, {
+              tabId: tabId,
+              tabUrl: tabUrl
+            });
+          });
+          if (!tabUrl.includes('youtube.com/watch')) {
+            console.log("Not a YouTube watch URL:", tabUrl);
+            setLoading(false);
+            setError('No YouTube video playing on this page.');
+            return;
+          }
+          console.log("Sending message to background script from popup...");
+          chrome.runtime.sendMessage({
+            action: 'getLatestVideoInfo',
+            tabId: tabId,
+            url: tabUrl
+          }, function (response) {
+            console.log("Response callback executed", response);
+            setLoading(false);
+            if (chrome.runtime.lastError) {
+              var errorMsg = chrome.runtime.lastError.message;
+              console.error("Runtime error:", errorMsg);
+              setError("Error: ".concat(errorMsg));
+              setDebugInfo(function (prev) {
+                return _objectSpread(_objectSpread({}, prev), {}, {
+                  runtimeError: errorMsg
+                });
+              });
+              return;
+            }
+            if (!response) {
+              console.error("No response received");
+              setError('No response received from background script.');
+              setDebugInfo(function (prev) {
+                return _objectSpread(_objectSpread({}, prev), {}, {
+                  responseError: "No response"
+                });
+              });
+              return;
+            }
+            setDebugInfo(function (prev) {
+              return _objectSpread(_objectSpread({}, prev), {}, {
+                response: response
+              });
+            });
+            if (response.status === 'not_found') {
+              console.log("No compression update found for this video");
+              setError('No compression update found yet for this video.');
+              return;
+            }
+            if (response.status === 'success') {
+              console.log("Success! Video info:", response.video);
+              setVideoInfo(response.video);
+            } else {
+              setError('Unknown response status.');
+            }
+          });
+        });
+      } catch (e) {
+        console.error("Exception in getTabAndFetchVideoInfo:", e);
         setLoading(false);
-        setError('Not on a YouTube video page');
-        return;
+        setError("Exception: ".concat(e.message));
+        setDebugInfo(function (prev) {
+          return _objectSpread(_objectSpread({}, prev), {}, {
+            exception: e.message
+          });
+        });
       }
-
-      // Send a message to the content script to get video info
-      chrome.tabs.sendMessage(activeTab.id, {
-        action: 'getVideoInfo'
-      }, function (response) {
-        setLoading(false);
-
-        // Check for error in communication with content script
-        if (chrome.runtime.lastError) {
-          setError('Could not connect to page. Make sure you are on a YouTube video page.');
-          return;
-        }
-
-        // Set video info if we got a valid response
-        if (response && response.isYouTubeVideo) {
-          setVideoInfo(response);
-        }
-      });
-    });
+    };
+    getTabAndFetchVideoInfo();
   }, []);
-
-  // Render loading state
   if (loading) {
     return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
       className: "popup-container"
@@ -34079,10 +34152,10 @@ var Popup = function Popup() {
       className: "header"
     }, "YouTube Compression Detector"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
       className: "loading"
-    }, "Loading..."));
+    }, "Loading..."), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("pre", {
+      className: "debug-info"
+    }, "Debug: ", JSON.stringify(debugInfo, null, 2)));
   }
-
-  // Render error state
   if (error) {
     return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
       className: "popup-container"
@@ -34090,21 +34163,10 @@ var Popup = function Popup() {
       className: "header"
     }, "YouTube Compression Detector"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
       className: "no-video"
-    }, error));
+    }, error), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("pre", {
+      className: "debug-info"
+    }, "Debug: ", JSON.stringify(debugInfo, null, 2)));
   }
-
-  // Render no video state
-  if (!videoInfo) {
-    return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-      className: "popup-container"
-    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h1", {
-      className: "header"
-    }, "YouTube Compression Detector"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-      className: "no-video"
-    }, "No YouTube video detected"));
-  }
-
-  // Render video info
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "popup-container"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h1", {
@@ -34113,13 +34175,33 @@ var Popup = function Popup() {
     className: "video-container"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "video-title"
-  }, videoInfo.title), videoInfo.videoId && /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
+  }, (videoInfo === null || videoInfo === void 0 ? void 0 : videoInfo.title) || "No title"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "video-id"
-  }, "Video ID: ", videoInfo.videoId)));
+  }, "Video ID: ", (videoInfo === null || videoInfo === void 0 ? void 0 : videoInfo.videoId) || "Unknown"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
+    className: "video-time"
+  }, "Last update: ", videoInfo !== null && videoInfo !== void 0 && videoInfo.timestamp ? new Date(videoInfo.timestamp).toLocaleTimeString() : "Unknown")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("pre", {
+    className: "debug-info"
+  }, "Debug: ", JSON.stringify(debugInfo, null, 2)));
 };
-
-// Render the popup
-react_dom__WEBPACK_IMPORTED_MODULE_1__.render(/*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(Popup, null), document.getElementById('root'));
+try {
+  var rootElement = document.getElementById('root');
+  if (!rootElement) {
+    console.error("Root element not found!");
+    document.addEventListener('DOMContentLoaded', function () {
+      var fallback = document.getElementById('root');
+      react_dom__WEBPACK_IMPORTED_MODULE_1__.render(/*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(Popup, null), fallback);
+    });
+  } else {
+    react_dom__WEBPACK_IMPORTED_MODULE_1__.render(/*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(Popup, null), rootElement); // For React 17
+    // For React 18:
+    // import { createRoot } from 'react-dom/client';
+    // const root = createRoot(rootElement);
+    // root.render(<Popup />);
+  }
+} catch (e) {
+  console.error("Error rendering popup:", e);
+  document.body.innerHTML = "<div style=\"color: red; padding: 20px;\">\n    Error rendering popup: ".concat(e.message, "\n    <pre>").concat(e.stack, "</pre>\n  </div>");
+}
 })();
 
 /******/ })()

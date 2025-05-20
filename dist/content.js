@@ -17,25 +17,37 @@ function getVideoTitle() {
   }
   return 'Unknown YouTube Video';
 }
-function sendVideoInfo() {
-  if (!isYouTubeWatchPage()) {
-    return {
-      isYouTubeVideo: false
-    };
-  }
+function collectVideoInfo() {
+  if (!isYouTubeWatchPage()) return null;
   return {
     isYouTubeVideo: true,
     title: getVideoTitle(),
     url: window.location.href,
-    videoId: new URLSearchParams(window.location.search).get('v')
+    videoId: new URLSearchParams(window.location.search).get('v'),
+    timestamp: Date.now()
   };
 }
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.action === 'getVideoInfo') {
-    sendResponse(sendVideoInfo());
+
+// Send video info every 1 minute
+setInterval(function () {
+  console.log("starting interval !!!");
+  var videoInfo = collectVideoInfo();
+  if (videoInfo) {
+    chrome.runtime.sendMessage({
+      action: 'videoUpdate',
+      video: videoInfo
+    });
   }
-  return true;
-});
+}, 60000);
+
+// Also send immediately on load
+var initialInfo = collectVideoInfo();
+if (initialInfo) {
+  chrome.runtime.sendMessage({
+    action: 'videoUpdate',
+    video: initialInfo
+  });
+}
 /******/ })()
 ;
 //# sourceMappingURL=content.js.map
