@@ -1,18 +1,21 @@
-Privacy Policy
-Video Compression Analyzer is a Chrome extension that analyzes video playback data from YouTube to estimate compression quality.
+# Privacy Policy
 
-What Data We Collect
-This extension does not collect, store, or transmit any personal data.
+**Video Compression Analyzer** is a Chrome extension that analyzes video playback data from YouTube to estimate compression quality.
 
-How It Works
-The extension runs locally in your browser and only accesses information from the currently active YouTube tab (such as video resolution, playback stats, and bitrate). No data is sent to any server or third party.
+## What Data We Collect
 
-Permissions
-activeTab: Used to access the currently active YouTube tab when you open the extension popup.
+This extension does **not** collect, store, or transmit any personal or user-identifiable data.
 
-scripting: Used to inject code into the YouTube page to measure video playback statistics.
+## How It Works
 
-host_permissions: Restricted to youtube.com to allow the extension to function on video pages only.
+The extension runs entirely in your browser. It accesses information from the currently active YouTube tab — such as video resolution, playback stats, and bitrate — to estimate compression efficiency. No data is sent to any server or third party.
 
-Data Usage
-All processing is done locally in your browser. This extension does not track users or display ads.
+## Permissions
+
+- **activeTab**: Allows access to the currently active YouTube tab when the extension popup is opened.
+- **scripting**: Enables injecting scripts into the YouTube page to measure video playback statistics.
+- **host_permissions**: Limited to `youtube.com` to allow functionality only on YouTube video pages.
+
+## Data Usage
+
+All processing is done locally. The extension does not track users, store browsing history, or display ads.
