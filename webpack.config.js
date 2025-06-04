@@ -22,7 +22,10 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env', '@babel/preset-react']
+            presets: [
+              ['@babel/preset-env', { targets: "defaults" }],
+              ['@babel/preset-react', { runtime: 'automatic' }]
+            ]
           }
         }
       },
@@ -40,7 +43,8 @@ module.exports = {
     }),
     new CopyPlugin({
       patterns: [
-        { from: 'public' }
+        { from: 'public' },
+        { from: 'src/popup/popup.css', to: 'popup.css' } // Ensure CSS is copied
       ],
     }),
   ],
