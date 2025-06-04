@@ -35572,7 +35572,7 @@ const Popup = () => {
           children: "Compression Ratio:"
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("span", {
           className: "value",
-          children: [videoData.compressionRatio.toFixed(2), ":1"]
+          children: [Math.round(videoData.compressionRatio), ":1"]
         })]
       })]
     })]

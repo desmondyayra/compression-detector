@@ -90,7 +90,8 @@ const Popup = () => {
         </div>
         <div className="stat-line highlight">
           <span className="label">Compression Ratio:</span>
-          <span className="value">{videoData.compressionRatio.toFixed(2)}:1</span>
+          <span className="value">{Math.round(videoData.compressionRatio)}:1
+          </span>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Video Detector",
+  "name": "Video Compression Detector",
   "version": "1.0.0",
-  "description": "Detects YouTube videos in the current tab",
+  "description": "Detects when a video you are streaming is overly compressed",
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
